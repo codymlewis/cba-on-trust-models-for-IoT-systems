@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+echo "Creating gif..."
+magick -delay 10 -loop 0 $(ls images/maps/*.png | sort -V) map.gif
+echo "Done. Written map.gif"

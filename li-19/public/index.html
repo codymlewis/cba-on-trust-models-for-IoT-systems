@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Create Map</title>
+    </head>
+    <body>
+        <h1 style="text-align:center">Create Map</h1>
+        <canvas style="margin-left:5%; margin-right:5%" width=1600 height=800 id="map"></canvas>
+        <button id="tocpp" style="margin-left:5%; margin-right:5%" >To C++</button>
+        <button id="tocsv" style="margin-left:5%; margin-right:5%" >To CSV</button>
+    </body>
+    <script>
+        var mapCanvas = document.getElementById('map');
+        var mapCtx = mapCanvas.getContext('2d');
+
+        class Map {
+            constructor(width, height) {
+                this.tiles = [];
+                this.width = width;
+                this.height = height;
+                for (var i = 0; i < this.height; ++i) {
+                    var row = [];
+                    for (var j = 0; j < this.width; ++j) {
+                        row[j] = 0;
+                    }
+                    this.tiles[i] = row;
+                }
+            }
+
+            toX(x) {
+                return Math.floor(map.width * x / mapCanvas.width);
+            }
+
+            toY(y) {
+                return Math.floor(map.height * y / mapCanvas.height);
+            }
+
+            cycle(x, y, addWidth, addHeight, cycleTo) {
+                for (var i = 0; i < addWidth && x + i < this.width; ++i) {
+                    for (var j = 0; j < addHeight && y + j < this.height; ++j) {
+                        this.tiles[y + j][x + i] = cycleTo;
+                    }
+                }
+            }
+
+            toFile() {
+                var file = "#include <vector>\n";
+                file += "#include \"GetData.h\"\n\n";
+                file += "std::vector<std::vector<int>> li19trustmodel::get_data()\n";
+                file += "{\n";
+                file += "\tstd::vector<std::vector<int>> v;\n";
+                for (var i in this.tiles) {
+                    file += "\tv.push_back({";
+                    for (var j in this.tiles[i]) {
+                        file += `${this.tiles[i][j]},`;
+                    }
+                    file = file.slice(0, -1);
+                    file += "});\n";
+                }
+                return file + "\treturn v;\n}";
+            }
+
+            toCSV() {
+                var file = "";
+                for (var i in this.tiles) {
+                    for (var j in this.tiles[i]) {
+                        file += `${this.tiles[i][j]},`;
+                    }
+                    file = file.slice(0, -1) + "\n";
+                }
+                return file.slice(0, -1);
+            }
+        }
+
+        var map = new Map(500, 500);
+
+        window.onload = () => {
+            drawMap();
+        }
+
+        function drawMap() {
+            for (var y in map.tiles) {
+                for (var x in  map.tiles[y]) {
+                    drawTile(x, y);
+                }
+            }
+        }
+
+        function drawTile(x, y, addWidth=1, addHeight=1) {
+            switch (map.tiles[y][x]) {
+                case 0:
+                    mapCtx.fillStyle = "#00FF00";
+                    break;
+                case 1:
+                    mapCtx.fillStyle = "#0000FF";
+                    break;
+            }
+            mapCtx.fillRect(
+                x * (mapCanvas.width / map.width),
+                y * (mapCanvas.height / map.height),
+                addWidth * mapCanvas.width / map.width,
+                addHeight * mapCanvas.height / map.height
+            );
+        }
+
+        var interval = '';
+        var colouring = false;
+        var cycleToMode = 0;
+
+        mapCanvas.addEventListener("mousedown", (e) => {
+            colouring = true;
+            coords = getXYCanvas(e);
+            cycleToMode = (map.tiles[coords.y][coords.x] + 1) % 2;
+        }, false);
+
+        mapCanvas.addEventListener("mouseup", () => {
+            colouring = false;
+        }, false);
+
+        mapCanvas.addEventListener("mouseleave", () => {
+            colouring = false;
+        }, false);
+
+        var fillSize = 12;
+
+        function getXYCanvas(e) {
+            var rect = mapCanvas.getBoundingClientRect();
+            var x = map.toX(e.clientX - rect.left);
+            var y = map.toY(e.clientY - rect.top);
+            return {x: x, y: y};
+        }
+
+        mapCanvas.addEventListener("mousemove", (e) => {
+            if (colouring) {
+                coords = getXYCanvas(e);
+                map.cycle(
+                    Math.max(0, coords.x - fillSize),
+                    Math.max(0, coords.y - fillSize),
+                    2 * fillSize,
+                    2 * fillSize, cycleToMode
+                );
+                drawTile(
+                    Math.max(0, coords.x - fillSize),
+                    Math.max(0, coords.y - fillSize),
+                    2 * fillSize,
+                    2 * fillSize
+                );
+            }
+        }, false);
+
+        document.getElementById("tocpp").addEventListener("click", () => {
+            var fileBlob = new Blob([map.toFile()], { type: 'text/plain' })
+            window.location.href = window.URL.createObjectURL(fileBlob);
+        })
+        document.getElementById("tocsv").addEventListener("click", () => {
+            var fileBlob = new Blob([map.toCSV()], { type: 'text/plain' })
+            window.location.href = window.URL.createObjectURL(fileBlob);
+        })
+    </script>
+</html>
