@@ -5,34 +5,34 @@
 # Author: Cody Lewis
 # Date: 2019-05-01
 
-Report <- setRefClass(
+Report <- R6::R6Class(
     "Report",
-    fields=list(
-        service="numeric",
-        capability="numeric",
-        time="numeric",
-        note="numeric",
-        issuer="numeric",
-        issuer.QR="numeric",
-        issuer.time.QR="numeric",
-        server="logical",
-        disregard="logical"
-    ),
-    methods=list(
+    list(
+        service = 0,
+        capability = 0,
+        time = 0,
+        note = 0,
+        issuer = 0,
+        issuer.QR = 0,
+        issuer.time.QR = 0,
+        server = FALSE,
+        disregard = FALSE,
+
         initialize = function(service, capability, time, note, issuer,
                               issuer.QR, issuer.time.QR, disregard=FALSE) {
-            service <<- service
-            capability <<- capability
-            time <<- time
-            note <<- note
-            issuer <<- issuer
-            issuer.QR <<- issuer.QR
-            issuer.time.QR <<- issuer.time.QR
-            server <<- FALSE
-            disregard <<- disregard
+            self$service <- service
+            self$capability <- capability
+            self$time <- time
+            self$note <- note
+            self$issuer <- issuer
+            self$issuer.QR <- issuer.QR
+            self$issuer.time.QR <- issuer.time.QR
+            self$server <- FALSE
+            self$disregard <- disregard
         }
     )
 )
+
 
 # Find the one dimensional distance between the target and current
 find.diff <- function(target, current) {

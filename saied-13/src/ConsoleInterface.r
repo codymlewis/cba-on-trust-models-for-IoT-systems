@@ -36,7 +36,9 @@ find.malicious.type <- function(opt) {
 # Give a list detailing the attack types to perform based on the input string
 parse.type.calc.string <- function(type.calc.string) {
     if(type.calc.string == "normal") {
-        return(list(LOCAL, NORMAL, FALSE, FALSE, FALSE))
+        return(list(LOCAL, NORMAL, FALSE, FALSE, FALSE, FALSE))
+    } else if(type.calc.string == "mitigating") {
+        return(list(LOCAL, NORMAL, FALSE, FALSE, FALSE, TRUE))
     }
     if(grepl("n", type.calc.string)) {
         if(grepl("c", type.calc.string)) {
@@ -59,7 +61,8 @@ parse.type.calc.string <- function(type.calc.string) {
             type.detection,
             grepl("a", type.calc.string), # disregard causes note negation
             grepl("s", type.calc.string), # Split calculations
-            grepl("q", type.calc.string) # disregard also punishes QR
+            grepl("q", type.calc.string), # disregard also punishes QR
+            grepl("mit", type.calc.string) # perform a mitigating calculation
         )
     )
 }
@@ -103,14 +106,14 @@ main <- function() {
                     help="Percentage of malicious reporting nodes to increment by [default %default]"),
         make_option(c("--reputation", "-r"), type="double", default=-1,
                     help="Reputation threshold, nodes in the network that fall below this are no longer considered in the network"),
-        make_option(c("--targeted", "-ta"), action="store_true", default=FALSE,
+        make_option(c("--targeted"), action="store_true", default=FALSE,
                     help="Analyze the targeted effects of an attack"),
         make_option(c("--type_calc"), type="character", default="normal",
                     help="Assign a type of calculation for report relevance the first letter states local or global (l, g), and the second states whether to detect based on notes or notes and context (n, c) [default %default]"),
-        make_option(c("--time_change", "-tc"), type="integer",
+        make_option(c("--time_change"), type="integer",
                     action="store", default=60,
                     help="The number epochs to increment the time at. [default %default]"),
-        make_option(c("--disregard_multiplier", "-dm"), action="store",
+        make_option(c("--disregard_multiplier"), action="store",
                     type="double", default=1,
                     help="Amount to multiply disregarded reports effects on QR [default %default]")
     )
@@ -150,7 +153,7 @@ main <- function() {
         opt$malicious_start, opt$malicious_end, by=opt$malicious_jump
     )
     for(percent.malicious.reporters in malicious.increments) {
-        tm <- TrustManager(
+        tm <- TrustManager$new(
             eta=opt$eta,
             lambda=opt$lambda,
             theta=opt$theta,

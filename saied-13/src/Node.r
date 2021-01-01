@@ -16,54 +16,51 @@ LOCAL <- 0
 GLOBAL <- 1
 
 # A generic node class
-Node <- setRefClass(
+Node <- R6::R6Class(
     "Node",
+    list(
+        id= 0,
+        service = 0,
+        capability = 0,
+        noteacc = 0,
+        QR = 0,
+        malicious = 0,
+        time.QR = 0,
+        reports = list(),
+        reputation = 0,
+        trust = 0,
+        type.calc = list(),
+        time.possible.attack = 0,
+        time.disregard = 0,
+        avg.capability = 0,
+        avg.service = 0,
+        number.reports = 0,
 
-    fields=list(
-        id="numeric",
-        service="numeric",
-        capability="numeric",
-        noteacc="numeric",
-        QR="numeric",
-        malicious="logical",
-        time.QR="numeric",
-        reports="list",
-        reputation="numeric",
-        trust="numeric",
-        type.calc="list",
-        time.possible.attack="numeric",
-        time.disregard="numeric",
-        avg.capability="numeric",
-        avg.service="numeric",
-        number.reports="numeric"
-    ),
-
-    methods=list(
         initialize = function(id, service, capability, noteacc, QR, malicious,
                               number.nodes, type.calc, time.disregard=1) {
-            id <<- id
-            service <<- service
-            capability <<- capability
-            noteacc <<- noteacc
-            QR <<- QR
-            malicious <<- malicious
-            time.QR <<- 0
-            type.calc <<- type.calc
-            time.disregard <<- time.disregard
+            self$id <- id
+            self$service <- service
+            self$capability <- capability
+            self$noteacc <- noteacc
+            self$QR <- QR
+            self$malicious <- malicious
+            self$time.QR <- 0
+            self$type.calc <- type.calc
+            self$time.disregard <- time.disregard
             if(type.calc[[2]] >= N) {
-                time.possible.attack <<- rep(-time.disregard - 1, number.nodes)
+                self$time.possible.attack <- rep(-time.disregard - 1, number.nodes)
             }
             if(type.calc[[2]] == MC) {
-                avg.capability <<- -1
-                avg.service <<- -1
-                number.reports <<- 0
+                self$avg.capability <- -1
+                self$avg.service <- -1
+                self$number.reports <- 0
             }
         },
 
         take.note = function(target.service, target.capability, proxy, time) {
             "Take note of the Quality of the service provided by a proxy"
             note = find.note(target.service, target.capability, proxy, time)
-            if(runif(1) > noteacc) {
+            if(runif(1) > self$noteacc) {
                 wrong_vals = setdiff(c(-1, 0, 1), note)
                 return(`if`(runif(1) < 0.5, wrong_vals[1], wrong_vals[2]))
             }
@@ -88,20 +85,19 @@ Node <- setRefClass(
         make.report = function(proxy, target.service, target.capability,
                                time) {
             "Create a report on the proxy server"
-            note = take.note(target.service, target.capability, proxy, time)
-            id.attacker = `if`(proxy$type.calc[[1]] == GLOBAL, proxy$id, id)
-            report.service = take.service(target.service)
-            report.capability = take.capability(proxy)
-            report.time = take.time(time)
-
-            proxy$reports[length(proxy$reports) + 1] <- Report(
+            note = self$take.note(target.service, target.capability, proxy, time)
+            id.attacker = `if`(proxy$type.calc[[1]] == GLOBAL, proxy$id, self$id)
+            report.service = self$take.service(target.service)
+            report.capability = self$take.capability(proxy)
+            report.time = self$take.time(time)
+            proxy$reports[[length(proxy$reports) + 1]] <- Report$new(
                 service=report.service,
                 capability=report.capability,
                 time=report.time,
                 note=note,
-                issuer=id,
-                issuer.QR=QR[[1]],
-                issuer.time.QR=time.QR[[1]],
+                issuer=self$id,
+                issuer.QR=self$QR[[1]],
+                issuer.time.QR=self$time.QR[[1]],
                 disregard=proxy$calc.disregard(
                     id.attacker, report.capability, report.service, note,
                     report.time
@@ -109,6 +105,7 @@ Node <- setRefClass(
             )
             if((proxy$type.calc[[2]] %in% c(N, C, CN)) && note == -1) {
                 proxy$time.possible.attack[[id.attacker]] <- time
+                print(proxy$time.possible.attack[[id.attacker]])
             }
 
             if(proxy$type.calc[[2]] == MC) {
@@ -126,30 +123,30 @@ Node <- setRefClass(
         calc.disregard = function(id.attacker, capability, service, note,
                                   time) {
             "Figure out whether the current report should be disregarded"
-            if(type.calc[[2]] %in% c(N, C, CN)) {
+            if(self$type.calc[[2]] %in% c(N, C, CN)) {
                return(
                     !is.na(time.possible.attack[[id.attacker]]) &&
-                    time.possible.attack[[id.attacker]] >=
-                    time - time.disregard &&
-                    `if`(type.calc[[2]] %in% c(N, CN), note == -1, TRUE) &&
+                    self$time.possible.attack[[id.attacker]] >=
+                    time - self$time.disregard &&
+                    `if`(self$type.calc[[2]] %in% c(N, CN), note == -1, TRUE) &&
                     `if`(
-                        type.calc[[2]] %in% c(C, CN),
-                        check.context(capability, service, note),
+                        self$type.calc[[2]] %in% c(C, CN),
+                        self$check.context(capability, service, note),
                         TRUE
                     )
                )
-            } else if(type.calc[[2]] == R) {
+            } else if(self$type.calc[[2]] == R) {
                 return(
-                    !is.na(time.possible.attack[[id.attacker]]) &&
-                    time.possible.attack[[id.attacker]] >=
-                    time - time.disregard
+                    !is.na(self$time.possible.attack[[id.attacker]]) &&
+                    self$time.possible.attack[[id.attacker]] >=
+                    time - self$time.disregard
                )
-            } else if(type.calc[[2]] == MC) {
+            } else if(self$type.calc[[2]] == MC) {
                 fuzz = 1
-                condition = (avg.capability - fuzz <= capability &&
-                             capability <= avg.capability + fuzz) ||
-                    (avg.service - fuzz <= service &&
-                     service <= avg.service + fuzz)
+                condition = (self$avg.capability - fuzz <= capability &&
+                             capability <= self$avg.capability + fuzz) ||
+                    (self$avg.service - fuzz <= service &&
+                     service <= self$avg.service + fuzz)
                 return(condition)
             }
 
@@ -169,10 +166,10 @@ Node <- setRefClass(
 )
 
 # A Bad mouthing node
-Node.BadMouther <- setRefClass(
+Node.BadMouther <- R6::R6Class(
     "Node.BadMouther",
-    contains="Node",
-    methods=list(
+    inherit=Node,
+    public=list(
         take.note = function(target.service, target.capability, proxy, time) {
             "Take a bad mouthing note, -1"
             return(-1)
@@ -181,10 +178,10 @@ Node.BadMouther <- setRefClass(
 )
 
 # A service setting node, this always reports the service as 50
-Node.BadMouther.ServiceSetter <- setRefClass(
+Node.BadMouther.ServiceSetter <- R6::R6Class(
     "Node.BadMouther.ServiceSetter",
-    contains="Node.BadMouther",
-    methods=list(
+    inherit=Node.BadMouther,
+    public=list(
         take.service = function(target.service) {
             "Give a service setted service value"
             return(context.set())
@@ -193,10 +190,10 @@ Node.BadMouther.ServiceSetter <- setRefClass(
 )
 
 # A capability setting node, this always reports the capability as 50
-Node.BadMouther.CapabilitySetter <- setRefClass(
+Node.BadMouther.CapabilitySetter <- R6::R6Class(
     "Node.BadMouther.CapabilitySetter",
-    contains="Node.BadMouther",
-    methods=list(
+    inherit=Node.BadMouther,
+    public=list(
         take.capability = function(proxy) {
             "Give a capability setted capability value"
             return(context.set())
@@ -205,10 +202,10 @@ Node.BadMouther.CapabilitySetter <- setRefClass(
 )
 
 # A service and capability setting node
-Node.BadMouther.CapabilitySetter.ServiceSetter <- setRefClass(
+Node.BadMouther.CapabilitySetter.ServiceSetter <- R6::R6Class(
     "Node.BadMouther.CapabilitySetter.ServiceSetter",
-    contains="Node.BadMouther.CapabilitySetter",
-    methods=list(
+    inherit=Node.BadMouther.CapabilitySetter,
+    public=list(
         take.service = function(target.service) {
             "Give a service setted service value"
             return(context.set())
@@ -217,10 +214,10 @@ Node.BadMouther.CapabilitySetter.ServiceSetter <- setRefClass(
 )
 
 # A time decaying node, this always reports the time as 5 units in the past
-Node.BadMouther.TimeDecayer <- setRefClass(
+Node.BadMouther.TimeDecayer <- R6::R6Class(
     "Node.BadMouther.TimeDecayer",
-    contains="Node.BadMouther",
-    methods=list(
+    inherit=Node.BadMouther,
+    public=list(
         take.time = function(time) {
             "Give a time decayed time value"
             return(time.decay(time))
@@ -229,10 +226,10 @@ Node.BadMouther.TimeDecayer <- setRefClass(
 )
 
 # A capability setting and time decaying node
-Node.BadMouther.CapabilitySetter.TimeDecayer <- setRefClass(
+Node.BadMouther.CapabilitySetter.TimeDecayer <- R6::R6Class(
     "Node.BadMouther.CapabilitySetter.TimeDecayer",
-    contains="Node.BadMouther.CapabilitySetter",
-    methods=list(
+    inherit=Node.BadMouther.CapabilitySetter,
+    public=list(
         take.time = function(time) {
             "Give a time decayed time value"
             return(time.decay(time))
@@ -241,10 +238,10 @@ Node.BadMouther.CapabilitySetter.TimeDecayer <- setRefClass(
 )
 
 # A service setting and time decaying node
-Node.BadMouther.ServiceSetter.TimeDecayer <- setRefClass(
+Node.BadMouther.ServiceSetter.TimeDecayer <- R6::R6Class(
     "Node.BadMouther.ServiceSetter.TimeDecayer",
-    contains="Node.BadMouther.ServiceSetter",
-    methods=list(
+    inherit=Node.BadMouther.ServiceSetter,
+    public=list(
         take.time = function(time) {
             "Give a time decayed time value"
             return(time.decay(time))
@@ -253,10 +250,10 @@ Node.BadMouther.ServiceSetter.TimeDecayer <- setRefClass(
 )
 
 # A capability setting, service setting and time decaying node
-Node.BadMouther.CapabilitySetter.ServiceSetter.TimeDecayer <- setRefClass(
+Node.BadMouther.CapabilitySetter.ServiceSetter.TimeDecayer <- R6::R6Class(
     "Node.BadMouther.CapabilitySetter.ServiceSetter.TimeDecayer",
-    contains="Node.BadMouther.CapabilitySetter.ServiceSetter",
-    methods=list(
+    inherit=Node.BadMouther.CapabilitySetter.ServiceSetter,
+    public=list(
         take.time = function(time) {
             "Give a time decayed time value"
             return(time.decay(time))

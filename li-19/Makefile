@@ -36,7 +36,7 @@ atts:
 	R -e "Rcpp::compileAttributes()"
 
 style:
-	R -e "styler::style_pkg(indent_by=4)"
+	R -e "styler::style_pkg(indent_by=8)"
 
 ref:
 	R CMD Rd2pdf .

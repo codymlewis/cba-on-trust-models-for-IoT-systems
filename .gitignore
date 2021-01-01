@@ -1,0 +1,5 @@
+Session.vim
+.Rhistory
+*.tar.gz
+*.png
+tags

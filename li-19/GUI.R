@@ -3,7 +3,7 @@
 library(li19trustmodel)
 
 main <- function() {
-    run_gui(config="inst/extdata/params.json")
+        run_gui(config="inst/extdata/params.json")
 }
 
 main()

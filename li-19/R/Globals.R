@@ -2,7 +2,7 @@
 NULL
 
 utils::globalVariables(
-    c("LAND", "WATER", "AIR", "TRUSTED", "UNKNOWN", "DISTRUST", "params")
+        c("LAND", "WATER", "AIR", "TRUSTED", "UNKNOWN", "DISTRUST", "params")
 )
 
 LAND <- 0
