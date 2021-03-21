@@ -22,7 +22,7 @@ Device <- R6::R6Class(
                 contexts = list(),
                 stored_trusts = list(),
                 cached_contexts = list(),
-                observed_trusts = NULL,
+                observed_trusts = numeric(),
                 acceptable_recs = list(),
                 old_trusts = list(),
                 old_contexts = list(),
@@ -347,6 +347,35 @@ Device <- R6::R6Class(
                                 } else {
                                         self$acceptable_recs[[obs$id_sender]][[params$time_now]] <- obs$acceptable
                                 }
+                                # if (obs$id_sender %in% c(1, 2)) {
+                                        # print(obs)
+                                        # print(self$acceptable_recs[[obs$id_sender]][[params$time_now]])
+# cw = find_weighted_context(
+#                                                                                 c(
+#                                                                                         self$cached_contexts[[obs$id_sender]],
+#                                                                                         obs$context
+#                                                                                 )
+#                                                                         )
+# print(context_distance(cw, self$old_contexts[[obs$id_sender]]))
+# print(self$old_trusts[[obs$id_sender]])
+# print(self$old_contexts[[obs$id_sender]])
+# print(cw)
+# print("calc")
+# print(abs(self$old_trusts[[obs$id_sender]] * params$eta[1]**(context_distance(cw, self$old_contexts[[obs$id_sender]]) / params$delta)))
+#                                         print(
+#                                                                 acceptable_rec(
+#                                                                         find_weighted_context(
+#                                                                                 c(
+#                                                                                         self$cached_contexts[[obs$id_sender]],
+#                                                                                         obs$context
+#                                                                                 )
+#                                                                         ),
+#                                                                         self$old_contexts[[obs$id_sender]],
+#                                                                         self$old_trusts[[obs$id_sender]]
+#                                                                 )
+
+#                                         )
+#                                 }
                         } else {
                                 self$acceptable_recs[[obs$id_sender]][[params$time_now]] <- obs$acceptable
                         }
@@ -620,6 +649,7 @@ Device <- R6::R6Class(
                         ow <- lapply(
                                 self$contacts,
                                 function(i) {
+                                        # print(sprintf("Contexts[%d] = %f", i, self$contexts[[i]][get_context_index(considerations[[i]])]))
                                         return(
                                                 `if`(
                                                         considerations[[i]] == 0,
@@ -788,6 +818,9 @@ Device <- R6::R6Class(
                                         -1,
                                         1
                                 )
+                                # if (id_sender %in% c(1, 2)) {
+                                #         print(sprintf("reputation[%d] = %f", id_sender, self$reputations[[id_sender]]))
+                                # }
                                 if (abs(self$reputations[[id_sender]]) <=
                                         params$trust_rep_adj_range) {
                                         self$reputations[[id_sender]] <- params$init_reputation

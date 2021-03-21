@@ -25,6 +25,7 @@ Params <- R6::R6Class(
             self$num_adversaries <- floor(
                 self$num_nodes / c(self$num_nodes + 1, 5, 2, 1.25, 1)
             )
+            # self$num_adversaries <- floor(self$num_nodes / 5)
         },
 
         set_frvals = function(frlow, frhigh) {
@@ -107,7 +108,7 @@ Node <- R6::R6Class(
         },
 
         calc_T = function(i, context, nodes) {
-            DT <- self$calc_DT(i)
+            DT <- self$calc_DT(i, nodes)
             IndT <- self$calc_IndT(i, context, nodes)
             alpha <- `if`(
                 (DT + IndT) > 0 && (DT + IndT) <= 1,
@@ -118,8 +119,14 @@ Node <- R6::R6Class(
             return(alpha * DT + beta * IndT)
         },
 
-        calc_DT = function(i) {
-            return(sum(self$DT[i, ] * self$calc_WW(i)))
+        calc_DT = function(i, nodes) {
+            return(
+                `if`(
+                     all(self$Tr[i, ] == 0),
+                     calc_R(`if`(nodes[[i]]$owner == self$owner, 0, 1)),
+                     sum(self$DT[i, ] * self$calc_WW(i))
+                )
+            )
         },
 
         calc_WW = function(i) {

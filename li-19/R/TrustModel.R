@@ -177,6 +177,9 @@ indirect_trust <- function(trusts, reputations, contexts,
                            context_weighted, context_cached) {
         omega_weighted <- omega(context_weighted, contexts)
         omega_cached <- omega(context_cached, contexts)
+        print(sprintf("context weighted: %f", context_weighted))
+        print(sprintf("context cached: %f", context_cached))
+        print()
         return(
                 sum(omega_weighted * omega_cached * reputations * trusts) /
                         sum(omega_weighted)

@@ -1,7 +1,7 @@
 Package: CBSTMIoT
 Title: Simulate The CBSTM IoT Trust Model
 Version: 0.0.1.9000
-Authors@R: 
+Authors@R:
     person(given = "Cody",
            family = "Lewis",
            role = c("aut", "cre"),
@@ -14,6 +14,6 @@ License: MIT
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
-Collate: 
+Collate:
     'Functions.R'
     'TrustModel.R'
