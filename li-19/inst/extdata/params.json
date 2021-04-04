@@ -33,7 +33,7 @@
     "max_trans": 1,
     "compression_factor": -1,
     "number_adversaries": 8,
-    "adversary_type": "BadMouther",
+    "adversary_type": "ContextSetter",
     "contacts_per_node": 10,
     "rand_context": false,
     "number_observer_contacts": 10,

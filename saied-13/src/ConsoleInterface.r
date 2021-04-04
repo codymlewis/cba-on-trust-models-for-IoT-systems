@@ -13,6 +13,9 @@ source("Functions.r")
 # Find the malicious typing specified in the arguments
 find.malicious.type <- function(opt) {
     malicious.type = ""
+    if(opt$context_attack) {
+        return("ca")
+    }
     if(opt$bad_mouth) {
         malicious.type = paste(malicious.type, "bm", sep="")
     } else if(opt$good_mouth) {
@@ -82,6 +85,8 @@ main <- function() {
                     help="Malicious nodes perform the capability setting attack (along with mouthing, they always report a particular capability value)"),
         make_option(c("--time_decay"), action="store_true", default=FALSE,
                     help="Malicious nodes perform the time decay attack (along with mouthing, they always report a reduced time value)"),
+        make_option(c("--context_attack"), action="store_true", default=FALSE,
+                    help="Malicious nodes perform the context attack"),
         make_option(c("--theta", "-t"), type="double", default=0.7,
                     help="Value for theta [default %default]"),
         make_option(c("--lambda", "-l"), type="double", default=0.7,

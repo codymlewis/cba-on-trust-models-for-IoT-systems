@@ -4,12 +4,11 @@ NULL
 Params <- R6::R6Class(
     "Params",
     list(
-        w = c(0.25, 0.25, 0.25, 0.25),
-        wh = 0.50,
-        wd = 0.50,
+        w = c(0.5, 0.2, 0.2, 0.1),
+        wh = 0.5,
+        wd = 0.5,
         MD = 0.1,
         R = 0.5,
-        CP = 1,  # Maximum computing power
         fb_max = 10,
         frlow = 30,
         frhigh = 70,
@@ -20,12 +19,12 @@ Params <- R6::R6Class(
         target = 8,
         observer = 1,
         target_context = 3,
+        observer_context = 5,
 
         initialize = function() {
             self$num_adversaries <- floor(
                 self$num_nodes / c(self$num_nodes + 1, 5, 2, 1.25, 1)
             )
-            # self$num_adversaries <- floor(self$num_nodes / 5)
         },
 
         set_frvals = function(frlow, frhigh) {
@@ -43,6 +42,7 @@ Node <- R6::R6Class(
     "Node",
     list(
         id = 0,
+        T = NULL,
         DT = NULL,
         Z = NULL,
         Tr = NULL,
@@ -52,6 +52,9 @@ Node <- R6::R6Class(
         context_potential = round(runif(1, min = 1, params$num_contexts)),
         other_node_ids = NULL,
         attack_context = 0,  # Context to perform attacks on, 0 means no attacks
+        CP = runif(1),
+        contexts_zd = NULL,  # Contexts Z calculated on
+        contexts_xd = NULL,  # Contexts transacted in
 
         initialize = function(owner, id) {
             self$owner <- owner
@@ -61,6 +64,11 @@ Node <- R6::R6Class(
         },
 
         set_vals = function() {
+            self$T <- matrix(
+                rep(rep(params$R, params$num_contexts), params$num_nodes),
+                ncol = params$num_contexts,
+                byrow = TRUE
+            )
             self$DT <- matrix(
                 rep(rep(params$R, params$num_contexts), params$num_nodes),
                 ncol = params$num_contexts,
@@ -68,6 +76,16 @@ Node <- R6::R6Class(
             )
             self$Z <- matrix(
                 rep(rep(params$R, params$num_contexts), params$num_nodes),
+                ncol = params$num_contexts,
+                byrow = TRUE
+            )
+            self$contexts_zd <- matrix(
+                rep(rep(FALSE, params$num_contexts), params$num_nodes),
+                ncol = params$num_contexts,
+                byrow = TRUE
+            )
+            self$contexts_xd <- matrix(
+                rep(rep(FALSE, params$num_contexts), params$num_nodes),
                 ncol = params$num_contexts,
                 byrow = TRUE
             )
@@ -108,23 +126,28 @@ Node <- R6::R6Class(
         },
 
         calc_T = function(i, context, nodes) {
-            DT <- self$calc_DT(i, nodes)
-            IndT <- self$calc_IndT(i, context, nodes)
-            alpha <- `if`(
-                (DT + IndT) > 0 && (DT + IndT) <= 1,
-                DT / (DT + IndT),
-                `if`(DT + IndT > 1, 1, 0)
-            )
-            beta <- 1 - alpha
-            return(alpha * DT + beta * IndT)
+            if(context == self$attack_context) {
+                self$T[i, context] <- 0
+            } else {
+                DT <- self$calc_DT(i, nodes)
+                IndT <- self$calc_IndT(i, context, nodes)
+                alpha <- `if`(
+                    (DT + IndT) > 0,
+                    DT / (DT + IndT),
+                    0
+                )
+                beta <- 1 - alpha
+                self$T[i, context] <- min(1, alpha * DT + beta * IndT)
+            }
+            return(self$T[i, context])
         },
 
         calc_DT = function(i, nodes) {
             return(
                 `if`(
-                     all(self$Tr[i, ] == 0),
-                     calc_R(`if`(nodes[[i]]$owner == self$owner, 0, 1)),
-                     sum(self$DT[i, ] * self$calc_WW(i))
+                    all(self$Tr[i, ] == 0),
+                    calc_R(`if`(nodes[[i]]$owner == self$owner, 0, 1)),
+                    sum(self$DT[i, ] * self$calc_WW(i))
                 )
             )
         },
@@ -135,21 +158,68 @@ Node <- R6::R6Class(
         },
 
         calc_IndT = function(i, context, nodes) {
+            RT <- self$calc_RT(i, context, nodes)
+            ids <- RT != Inf
+            RT <- RT[ids]
             return(
-                sum(
-                    self$RT[i, self$other_node_ids, context] *
-                    self$calc_X(i, context, nodes)
-                ) /
-                length(self$RT[i, self$other_node_ids, context])
+                `if`(
+                    length(RT) > 0,
+                    sum(
+                        RT *
+                        self$calc_X(i, context, nodes)[ids]
+                    ) /
+                    length(RT),
+                    0
+                )
+            )
+        },
+
+        calc_RT = function(i, context, nodes) {
+            return(
+                sapply(
+                    self$other_node_ids,
+                    function(j) {
+                        `if`(
+                            nodes[[j]]$contexts_xd[i, context],
+                            nodes[[j]]$T[i, context],
+                            `if`(
+                                any(nodes[[j]]$contexts_xd[i, ]),
+                                mean(nodes[[j]]$T[i, ][nodes[[j]]$contexts_xd[i, ]]),
+                                Inf
+                            )
+                        )
+                    }
+                )
             )
         },
 
         calc_X = function(i, context, nodes) {
+            Z <- self$calc_Z(context)
+            Z <- Z[Z != Inf]
             return(
-                params$w[[1]] * self$Z[self$other_node_ids, context] +
+                params$w[[1]] * `if`(length(Z) > 0, Z, 0) +
                     params$w[[2]] * self$calc_OT(nodes) +
-                    params$w[[3]] * (1 - params$CP) +
+                    params$w[[3]] * self$calc_CP(nodes) +
                     params$w[[4]] * self$calc_R(nodes)
+            )
+        },
+
+        calc_Z = function(context, nodes) {
+            return(
+                sapply(
+                    self$other_node_ids,
+                    function(i) {
+                        `if`(
+                            self$contexts_zd[i, context],
+                            self$Z[i, context],
+                            `if`(
+                                any(self$contexts_zd[i, ]),
+                                mean(self$Z[i, ][self$contexts_zd[i, ]]),
+                                Inf
+                            )
+                        )
+                    }
+                )
             )
         },
 
@@ -185,6 +255,17 @@ Node <- R6::R6Class(
             )
         },
 
+        calc_CP = function(nodes) {
+            return(
+               sapply(
+                    self$other_node_ids,
+                    function(i) {
+                        return(1 - nodes[[i]]$CP)
+                    }
+               )
+            )
+        },
+
         calc_R = function(nodes) {
             return(
                 sapply(
@@ -205,25 +286,13 @@ Node <- R6::R6Class(
                 runif(1, min = 1, max = 10),
                 runif(1, min = -10, max = 0)
             )
-            self$update_DT(params$target, context, fb)
-            for (k in self$other_node_ids) {
-                self$update_Z(params$target, k, context, fb)
-                nodes[[k]]$get_rec(
-                    params$target,
-                    self$id,
-                    `if`(self$attack_context > 0, self$attack_context, context),
-                    `if`(
-                        self$attack_context > 0,
-                        0,
-                        self$DT[params$target, context]
-                    )
-                )
+            self$contexts_xd[params$target, context] <- TRUE
+            if(self$id != params$observer) {
+                self$update_DT(params$target, context, fb)
             }
-            invisible(self)
-        },
-
-        get_rec = function(i, k, context, RT) {
-            self$RT[i, k, context] <- RT
+            for (k in self$other_node_ids) {
+                self$update_Z(params$target, k, context, fb, nodes[[k]])
+            }
             invisible(self)
         },
 
@@ -241,10 +310,21 @@ Node <- R6::R6Class(
             invisible(self)
         },
 
-        update_Z = function(i, k, context, fb) {
+        update_Z = function(i, k, context, fb_s, other) {
+            RT <- `if`(
+                other$contexts_xd[i, context],
+                other$T[i, context],
+                `if`(
+                    any(other$contexts_xd[i, ]),
+                    mean(other$T[i, ][other$contexts_xd[i, ]]),
+                    0
+                )
+            )
+            fb <- fb_s * RT
             delta_z <- fb / (params$fb_max / params$MD)
-            self$Z[k, context] <- self$Z[k, context] +
-                `if`(self$RT[i, k, context] >= 0.5, delta_z, -delta_z)
+            self$Z[k, context] <- max(0, min(1, self$Z[k, context] +
+                `if`(self$RT[i, k, context] >= 0.5, delta_z, -delta_z)))
+            self$contexts_zd[k, context] <- TRUE
             invisible(self)
         }
     )
@@ -315,20 +395,24 @@ perform_transactions <- function(num_trans, nodes) {
     for (i in seq_len(num_trans)) {
         for (node in nodes) {
             if (node$id != params$observer) {
+                context <- round(runif(1, min = 1, max = params$num_contexts))
+                node$calc_T(params$target, context, nodes)
                 node$transaction(
                     nodes,
-                    round(runif(1, min = 1, max = params$num_contexts))
+                    context
                 )
             }
         }
         trust_vals <- c(
             trust_vals,
             nodes[[params$observer]]$calc_T(
-                params$target, params$target_context, nodes
+                params$target, params$observer_context, nodes
             )
         )
+        nodes[[params$observer]]$transaction(nodes, params$observer_context)
         cat_progress(
-            i, num_trans, prefix = sprintf("Transaction %d/%d", i, num_trans)
+            i, num_trans, prefix = sprintf("Transaction %d/%d", i, num_trans),
+            postfix = sprintf("T = %f", tail(trust_vals, 1))
         )
     }
     return(data.frame(trusts = trust_vals, transactions = seq_len(num_trans)))
@@ -409,7 +493,7 @@ create_plot <- function(trust_vals) {
         )
     ) +
         ggplot2::geom_line() +
-        ggplot2::geom_point() +
+        # ggplot2::geom_point() +
         ggplot2::labs(
             x = "Transactions",
             y = "Trust value",
@@ -418,7 +502,7 @@ create_plot <- function(trust_vals) {
         ) +
         ggplot2::scale_y_continuous(limits = c(-0.05, 1.05)) +
         ggplot2::scale_color_manual(values = colors) +
-        ggplot2::scale_shape_manual(values = shapes) +
+        # ggplot2::scale_shape_manual(values = shapes) +
         ggplot2::theme(legend.position = "bottom")
     ggplot2::ggsave(
         file = filename,

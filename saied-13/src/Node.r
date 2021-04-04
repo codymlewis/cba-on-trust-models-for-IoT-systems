@@ -177,6 +177,27 @@ Node.BadMouther <- R6::R6Class(
     )
 )
 
+Node.ContextAttacker <- R6::R6Class(
+        "Node.ContextAttacker",
+        inherit=Node,
+        public=list(
+            take.note = function(target.service, target.capability, proxy, time) {
+                    "Take note of the Quality of the service provided by a proxy"
+                    attack.val <- context.set()
+                    tau <- 0.05
+                    if(abs(target.service - attack.val) < tau && abs(target.capability - attack.val) < tau) {
+                        return(-1)
+                    }
+                    note = find.note(target.service, target.capability, proxy, time)
+                    if(runif(1) > self$noteacc) {
+                        wrong_vals = setdiff(c(-1, 0, 1), note)
+                        return(`if`(runif(1) < 0.5, wrong_vals[1], wrong_vals[2]))
+                    }
+                    return(note)
+            }
+        )
+)
+
 # A service setting node, this always reports the service as 50
 Node.BadMouther.ServiceSetter <- R6::R6Class(
     "Node.BadMouther.ServiceSetter",

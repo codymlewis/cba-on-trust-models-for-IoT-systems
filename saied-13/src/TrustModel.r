@@ -105,6 +105,8 @@ TrustManager <- R6::R6Class(
                         node.type = Node.BadMouther.CapabilitySetter.ServiceSetter
                     } else if(type.malicious == "bmcssstd") {
                         node.type = Node.BadMouther.CapabilitySetter.ServiceSetter.TimeDecayer
+                    } else if(type.malicious == "ca") {
+                        node.type = Node.ContextAttacker
                     }
                 }
                 self$nodes[[id]] <- node.type$new(
