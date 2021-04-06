@@ -3,3 +3,6 @@ Session.vim
 *.tar.gz
 *.png
 tags
+__pycache__/
+*.pyc
+results.csv

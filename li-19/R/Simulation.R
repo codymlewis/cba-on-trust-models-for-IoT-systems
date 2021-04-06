@@ -55,7 +55,9 @@ batch_simulation <- function(total_time,
                         function(i) {
                                 config$number_adversaries <- i
                                 cat(sprintf("Running simulations with %d adversaries...\n", i))
-                                return(run_sim_part(total_time, map_filename, config, FALSE))
+                                result <- run_sim_part(total_time, map_filename, config, FALSE)
+                                cat(sprintf("Converged trust estimate: %f\n", mean(tail(result$estimated_trusts, 100))))
+                                return(result)
                         }
                 )
                 names(data_list) <- sprintf("%d Adversaries", num_adversaries)
@@ -595,11 +597,6 @@ make_adversaries <- function(sp, map, devices) {
         }
         return(devices)
 }
-
-
-# copy_nodes <- function(sp, map, devices) {
-#         for (i in seq_len(params$number))
-# }
 
 
 create_honest_nodes <- function(sp, map, devices) {
