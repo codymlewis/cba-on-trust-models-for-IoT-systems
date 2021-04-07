@@ -1,3 +1,3 @@
 class ServiceProvider:
     def serve(self):
-        return -1
+        return 1

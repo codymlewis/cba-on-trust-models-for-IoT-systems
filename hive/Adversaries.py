@@ -17,7 +17,10 @@ class ContextAttacker(Node):
             self.attack_prev = not self.attack_prev
             node.get_rec(
                 self.id,
-                np.array([self.current_c[0] - (500 if self.attack_prev else 0), 0.5, 0.5, 0.5]),
+                np.array(
+                    [self.current_c[0] - (500 if self.attack_prev else 0)] +
+                    [0.5 for _ in range(self.params['number_contexts'] - 1)]
+                ),
                 -1
             )
         else:

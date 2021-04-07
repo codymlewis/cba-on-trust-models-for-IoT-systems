@@ -9,6 +9,7 @@ def d(a, b):
 def sign(x):
     return f if (f := np.sign(x)) != 0 else 1
 
+# rm
 def s(a, b):
     "Get the similarity between a and b where they are in [-1, 1]"
     return int(sign(a) == sign(b))
