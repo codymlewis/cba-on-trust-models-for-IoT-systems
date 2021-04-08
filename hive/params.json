@@ -1,7 +1,7 @@
 {
-    "number_nodes": 100,
+    "number_nodes": 10,
     "percent_adv": [0.0, 0.2, 0.5, 0.8, 1.0],
-    "adv_type": "BadMouther",
+    "adv_type": "ContextAttacker",
     "init_trust": 0.01,
     "number_contexts": 4,
     "eta": 0.95,

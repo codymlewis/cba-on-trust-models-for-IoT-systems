@@ -1,9 +1,15 @@
+'''
+The observer makes measurements of the system without interacting with it.
+'''
+
+
 import numpy as np
 
-from Node import Node
+from node import Node
 
 
 class Observer(Node):
+    '''An observer node.'''
     def __init__(self, i, params):
         super().__init__(i, params)
         self.current_c = np.array(
@@ -11,4 +17,5 @@ class Observer(Node):
         )
 
     def increment(self):
+        '''Only increment the time.'''
         self.current_c[0] += 1

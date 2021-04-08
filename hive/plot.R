@@ -1,5 +1,7 @@
 #!/usr/bin/Rscript
 
+# Generate a plot from simulation data
+
 library(reshape)
 library(ggplot2)
 library(rjson)
