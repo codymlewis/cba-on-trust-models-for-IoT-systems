@@ -1,9 +1,8 @@
 # Li 19 Trust Model
 
-A simulator of the trust model proposed in Context-Aware Trust Management
-System for IoT Applications with Multiple Domains
+A simulator of the trust model proposed in ["Context-Aware Trust Management System for IoT Applications with Multiple Domains"](https://ieeexplore.ieee.org/document/8885376).
 
-![Gif of map](https://gitlab.com/codymlewis/li-19-trust-model/raw/master/map.gif)
+![Gif of map](https://raw.githubusercontent.com/codymlewis/cba-on-trust-models-for-IoT-systems/master/li-19/map.gif)
 
 
 ## Requirements

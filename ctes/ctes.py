@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import sys
 
 import numpy as np
-import pandas as pd
 
 from tqdm import trange, tqdm
 

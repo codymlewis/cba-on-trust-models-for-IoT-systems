@@ -1,7 +1,6 @@
 # CBSTM IoT
 
-A simulator of the trust mode proposed in CBSTM-IoT: Context-based
-Social Trust Model for The Internet of Things
+A simulator of the trust model proposed in ["CBSTM-IoT: Context-based Social Trust Model for The Internet of Things"](https://ieeexplore.ieee.org/abstract/document/7496623)
 
 ## Requirements
 

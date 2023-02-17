@@ -1,4 +1,4 @@
-# HIVE
+# Our Proposed Trust Model
 A trust management system that mitigates context-based attacks, along with
 normal note-based attacks.
 
