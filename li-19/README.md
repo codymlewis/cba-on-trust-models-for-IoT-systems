@@ -47,4 +47,4 @@ ln config/pre-push.sh .git/hooks/pre-push
 
 ## API Reference
 
-see https://codymlewis.gitlab.io/li-19-trust-model/li19trustmodel.pdf
+see https://github.com/codymlewis/cba-on-trust-models-for-IoT-systems/blob/main/li-19/public/li19trustmodel.pdf
