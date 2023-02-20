@@ -1,6 +1,6 @@
 # Context Based Attacks on Trust Models for IoT Systems
 
-Code repository corresponding to ["Targeted context based attacks on trust management systems in IoT"](https://ieeexplore.ieee.org/document/10045714) by Cody Lewis, Nan Li, and Nasimul Noman.
+Code repository corresponding to ["Targeted context based attacks on trust management systems in IoT"](https://ieeexplore.ieee.org/document/10045714) by Cody Lewis, Nan Li, and Vijay Varadharajan.
 
 ## Abstract
 
